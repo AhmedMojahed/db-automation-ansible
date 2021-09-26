@@ -1,0 +1,48 @@
+---
+- name: Adding cassandra repo
+  command: echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+
+- name: Adding cassandra key
+  command: curl -fsSL https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+
+- name: Install cassandra
+  apt:
+    name: cassandra
+    state: present
+    disable_gpg_check: yes
+
+- name: disable and Enable cassandra service
+  systemd:
+    name: cassandra
+    state: stopped
+    enabled: yes
+
+- name: Start and Enable firewalld service
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: remove cassandra data
+  command: rm -rf /var/lib/cassandra/*
+
+- name: Add cassandra to firewall
+  firewalld:
+    service: cassandra
+    permanent: yes
+    state: enabled
+
+- name: add cassandra ports to firewall
+  firewalld:
+    ports:
+      - "7000/tcp"
+      - "7001/tcp"
+      - "7199/tcp"
+      - "9042/tcp"
+      - "9142/tcp"
+      - "9160/tcp"
+    state: enabled
+    permanent: yes
+  notify: firewall_reload
+
+- meta: flush_handlers
