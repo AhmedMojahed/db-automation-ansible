@@ -1,140 +1,87 @@
 terraform {
   required_providers {
     proxmox = {
-      source  = "telmate/proxmox"
+      source  = "Telmate/proxmox"
       version = ">=2.7.4"
     }
   }
+  # required_version = ">= 0.14"
 }
 
 provider "proxmox" {
-  pm_api_url      = var.PM_API_URL
-  pm_user         = var.PM_USER
-  pm_password     = var.PM_PASS
+  pm_api_url      = var.proxmox_host["pm_api_url"]
+  pm_user         = var.proxmox_host["pm_user"]
+  pm_password     = var.proxmox_host["pm_password"]
   pm_tls_insecure = true
 }
 
+resource "proxmox_vm_qemu" "prox-vm" {
+  count       = length(var.hostnames)
+  name        = var.hostnames[count.index]
+  target_node = var.proxmox_host["target_node"]
+  full_clone  = true
+  clone       = "cloud-init-focal"
 
-resource "proxmox_vm_qemu" "cloudinit-test" {
-  name = var.vm_name
+  cores    = 2
+  sockets  = 1
+  memory   = 2048
+  balloon  = 2048
+  boot     = "c"
+  bootdisk = "virtio0"
 
+  scsihw = "virtio-scsi-pci"
 
-  # Node name has to be the same name as within the cluster
-  # this might not include the FQDN
-  target_node = var.vm_target_node
+  onboot  = true
+  agent   = 1
+  cpu     = "kvm64"
+  numa    = true
+  hotplug = "network,disk,cpu,memory"
 
-  iso = var.vm_iso
-  # Requested HA state for the resource. One of "started", "stopped", "enabled", "disabled", or "ignored". See the docs about HA for more info.
-  # hastate = ""
-
-  cores   = var.vm_cores
-  sockets = var.vm_sockets
-  vcpus   = 0
-  cpu     = "host"
-  memory  = var.vm_memory
-  # scsihw = "lsi"
-
-  # If false, and a vm of the same name, on the same node exists, terraform will attempt to reconfigure that VM with these settings. 
-  #Set to true to always create a new VM (note, the name of the VM must still be unique, otherwise an error will be produced.)
-  # force_create = false
-
-  os_type = "ubuntu"
-  # Setup the disk
-  disk {
-    size    = var.disk_size
-    type    = var.disk_type
-    storage = var.disk_storage
-    # ssd     = var.disk_ssd
-  }
-
-  # Setup the network interface and assign a vlan tag: 256
   network {
-    model  = var.network_model
-    bridge = var.network_bridge
-    tag    = var.network_tag
+    bridge = "vmbr0"
+    model  = "e1000"
+    # the vlan tag
+    # tag    = 8
+  }
+  ipconfig0 = "ip=${var.ips[count.index]}/24,gw=${cidrhost(format("%s/24", var.ips[count.index]), 1)}"
+
+  disk {
+    #id = 0
+    type    = "virtio"
+    storage = "local-lvm"
+    size    = "20G"
   }
 
-  # Setup the ip address using cloud-init.
-  # Keep in mind to use the CIDR notation for the ip.
-  # The first IP address to assign to the guest.
-  # Format: [gw=<GatewayIPv4>] [,gw6=<GatewayIPv6>] [,ip=<IPv4Format/CIDR>] [,ip6=<IPv6Format/CIDR>].
-  ipconfig0 = "ip=${var.ipconfig0_ip},gw=${var.ipconfig0_gw}"
-
-  # sshkeys = var.sshkey
+  os_type = "cloud-init"
+  # uncomment and add your keys if you didn't add it in the cloud init template 
+  # sshkeys = file(var.ssh_keys["pub"])
 
 
+  # uncomment all of the following and configure if you want to run ansible playbooks inside terraform
+  #creates ssh connection to check when the vm is ready for ansible provisioning
+  # connection {
+  #   host        = var.ips[count.index]
+  #   user        = var.user
+  #   private_key = file(var.ssh_keys["priv"])
+  #   # host_key    = file(var.ssh_keys["pub"])
+  #   agent   = false
+  #   timeout = "30s"
+  # }
+
+  # provisioner "remote-exec" {
+  #   # Leave this here so we know when to start with Ansible local-exec 
+  #   inline = ["echo 'Cool, we are ready for provisioning'"]
+  # }
+
+  # provisioner "local-exec" {
+  #   working_dir = "../../ansible/"
+  #   command     = "ansible-playbook -u ${var.user} -e 'ansible_python_interpreter=/usr/bin/python3' --key-file ${var.ssh_keys["priv"]} -i ${var.ips[count.index]}, provision.yaml"
+  # }
+
+  # provisioner "local-exec" {
+  #   working_dir = "../../ansible/"
+  #   command     = "ansible-playbook -u ${var.user} -e 'ansible_python_interpreter=/usr/bin/python3' --key-file ${var.ssh_keys["priv"]} -i ${var.ips[count.index]}, install-qemu-guest-agent.yaml"
+  # }
 }
 
 
-
-# resource "proxmox_vm_qemu" "cloudinit-test" {
-#     name = "terraform-test-vm"
-#     desc = "A test for using terraform and cloudinit"
-
-#     # Node name has to be the same name as within the cluster
-#     # this might not include the FQDN
-#     target_node = "proxmox-server02"
-
-#     # The destination resource pool for the new VM
-#     pool = "pool0"
-
-#     # The template name to clone this vm from
-#     clone = "linux-cloudinit-template"
-
-#     # Activate QEMU agent for this VM
-#     agent = 1
-
-#     os_type = "cloud-init"
-#     cores = 2
-#     sockets = 1
-#     vcpus = 0
-#     cpu = "host"
-#     memory = 2048
-#     scsihw = "lsi"
-
-#     # Setup the disk
-#     disk {
-#         size = 32
-#         type = "virtio"
-#         storage = "ceph-storage-pool"
-#         storage_type = "rbd"
-#         iothread = 1
-#         ssd = 1
-#         discard = "on"
-#     }
-
-#     # Setup the network interface and assign a vlan tag: 256
-#     network {
-#         model = "virtio"
-#         bridge = "vmbr0"
-#         tag = 256
-#     }
-
-#     # Setup the ip address using cloud-init.
-#     # Keep in mind to use the CIDR notation for the ip.
-#     ipconfig0 = "ip=192.168.10.20/24,gw=192.168.10.1"
-
-#     sshkeys = <<EOF
-#     ssh-rsa 9182739187293817293817293871== user@pc
-#     EOF
-# }
-
-
-
-# resource "proxmox_lxc" "lxc-test" {
-#     features {
-#         nesting = true
-#     }
-#     hostname = "terraform-new-container"
-#     network {
-#         name = "eth0"
-#         bridge = "vmbr0"
-#         ip = "dhcp"
-#         ip6 = "dhcp"
-#     }
-#     ostemplate = "shared:vztmpl/centos-7-default_20171212_amd64.tar.xz"
-#     password = "rootroot"
-#     pool = "terraform"
-#     target_node = "node-01"
-#     unprivileged = true
-# }
