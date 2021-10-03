@@ -25,6 +25,9 @@ rm focal-server-cloudimg-amd64.img
 ## Modifications
 
 You need to modify the files to fit you setup
+
+In [variables.tf](./variables.tf) file you need to chane `all` the attributes
+
 In [main.tf](./main.tf) file you may need to change some attributes
 
 ```
@@ -59,5 +62,9 @@ resource "proxmox_vm_qemu" "prepprovision-test" {
 
 }
 ```
-
-In [variables.tf](./variables.tf) file you need to chane `all` the attributes
+## Usage
+` terraform init `
+` terraform apply -auto-approve `
+### Note: the apply stage takes around 11 min to finish
+for destroying the infra 
+ ` terraform destroy `
