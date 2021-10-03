@@ -1,0 +1,8 @@
+---
+- hosts: cluster-nodes
+  remote_user: adminuser
+  # become_method: sudo
+  # connection: ssh
+  become: yes
+  roles:
+    - common

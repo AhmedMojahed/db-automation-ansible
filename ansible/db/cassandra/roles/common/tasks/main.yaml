@@ -1,48 +1,70 @@
 ---
 - name: Adding cassandra repo
-  command: echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+  shell: "echo 'deb http://www.apache.org/dist/cassandra/debian 311x main' | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list"
 
 - name: Adding cassandra key
-  command: curl -fsSL https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+  shell: "curl -fsSL https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -"
+
+- name: updateing repo cache
+  shell: "apt-get update"
 
 - name: Install cassandra
   apt:
-    name: cassandra
+    name:
+      - openjdk-8-jdk
+      - cassandra
     state: present
-    disable_gpg_check: yes
 
 - name: disable and Enable cassandra service
   systemd:
     name: cassandra
     state: stopped
     enabled: yes
+- name: add java home
+  lineinfile:
+    dest: "/home/adminuser/.bashrc"
+    line: "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/"
+    owner: adminuser
+    group: adminuser
 
-- name: Start and Enable firewalld service
-  systemd:
-    name: firewalld
-    state: started
-    enabled: yes
+# - name: Start and Enable firewalld service
+#   systemd:
+#     name: firewalld
+#     state: started
+#     enabled: yes
 
 - name: remove cassandra data
-  command: rm -rf /var/lib/cassandra/*
+  shell: "rm -rf /var/lib/cassandra/* && sudo rm -f /etc/cassandra/cassandra-topology.properties"
 
-- name: Add cassandra to firewall
-  firewalld:
-    service: cassandra
-    permanent: yes
-    state: enabled
+- name: configuring cassandra
+  template:
+    src: cassandra.yaml
+    dest: /etc/cassandra/cassandra.yaml
+    owner: root
+    group: root
+    mode: 750
 
-- name: add cassandra ports to firewall
-  firewalld:
-    ports:
-      - "7000/tcp"
-      - "7001/tcp"
-      - "7199/tcp"
-      - "9042/tcp"
-      - "9142/tcp"
-      - "9160/tcp"
-    state: enabled
-    permanent: yes
-  notify: firewall_reload
+# - name: Add cassandra to firewall
+#   firewalld:
+#     service: cassandra
+#     permanent: yes
+#     state: enabled
 
-- meta: flush_handlers
+# - name: add cassandra ports to firewall
+#   firewalld:
+#     ports:
+#       - "7000/tcp"
+#       - "7001/tcp"
+#       - "7199/tcp"
+#       - "9042/tcp"
+#       - "9142/tcp"
+#       - "9160/tcp"
+#     state: enabled
+#     permanent: yes
+#   notify: firewall_reload
+
+- name: start cassandra service
+  systemd:
+    name: cassandra
+    state: started
+# - meta: flush_handlers

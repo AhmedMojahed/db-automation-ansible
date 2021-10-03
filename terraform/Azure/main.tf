@@ -73,11 +73,11 @@ resource "azurerm_linux_virtual_machine" "halandbmvm" {
   resource_group_name             = azurerm_resource_group.halangroup.name
   network_interface_ids           = [azurerm_network_interface.halandbmvmnic.id]
   size                            = var.vm_size
-  admin_username                  = "admin"
+  admin_username                  = "adminuser"
   disable_password_authentication = true
 
   admin_ssh_key {
-    username   = "admin"
+    username   = "adminuser"
     public_key = file("~/.ssh/id_rsa.pub")
   }
 
@@ -130,11 +130,11 @@ resource "azurerm_linux_virtual_machine" "halandbs1vm" {
   resource_group_name             = azurerm_resource_group.halangroup.name
   network_interface_ids           = [azurerm_network_interface.halandbs1vmnic.id]
   size                            = var.vm_size
-  admin_username                  = "admin"
+  admin_username                  = "adminuser"
   disable_password_authentication = true
 
   admin_ssh_key {
-    username   = "admin"
+    username   = "adminuser"
     public_key = file("~/.ssh/id_rsa.pub")
   }
 
@@ -188,11 +188,11 @@ resource "azurerm_linux_virtual_machine" "halandbs2vm" {
   resource_group_name             = azurerm_resource_group.halangroup.name
   network_interface_ids           = [azurerm_network_interface.halandbs2vmnic.id]
   size                            = var.vm_size
-  admin_username                  = "admin"
+  admin_username                  = "adminuser"
   disable_password_authentication = true
 
   admin_ssh_key {
-    username   = "admin"
+    username   = "adminuser"
     public_key = file("~/.ssh/id_rsa.pub")
   }
 
