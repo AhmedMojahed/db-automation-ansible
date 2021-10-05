@@ -40,9 +40,9 @@
   template:
     src: cassandra.yaml
     dest: /etc/cassandra/cassandra.yaml
-    owner: root
-    group: root
-    mode: 750
+    owner: cassandra
+    group: cassandra
+    mode: 640
 
 # - name: Add cassandra to firewall
 #   firewalld:
