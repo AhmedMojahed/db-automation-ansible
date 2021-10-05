@@ -76,6 +76,20 @@ variable "dbs2_vm_private_ip" {
 
 ####################################################
 
+# dbs Vm ##
+
+variable "dbs3_vm_name" {
+  description = "the name of the dbs2 virtual machine"
+  default     = "halan-dbs3-vm"
+}
+
+variable "dbs3_vm_private_ip" {
+  description = "the private ip address of the dbs2 virtual machine"
+  default     = "10.0.0.13"
+}
+
+
+
 ### enviroment variables ###
 # DB_NAME: "devops",
 # DB_USER_NAME: "devops",

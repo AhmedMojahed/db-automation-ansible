@@ -1,0 +1,33 @@
+---
+- name: Adding redis repo
+  apt_repository:
+    repo: "ppa:redislabs/redis"
+
+- name: updating cache
+  apt:
+    update_cache: yes
+
+- name: installing redis server
+  apt:
+    name:
+      - redis
+    update_cache: yes
+
+- name: configureing redis
+  template:
+    dest: /etc/redis/redis.conf
+    src: redis.conf
+    mode: u=rw,g=r
+
+- name: replication configure
+  lineinfile:
+    path: /etc/redis/redis.conf
+    line: "replicaof {{ master_ip }} {{ master_port}}"
+    insertafter: EOF
+  when: inventory_hostname in groups['replica']
+
+- name: restarting service
+  systemd:
+    name: redis-server
+    state: restarted
+    enabled: yes

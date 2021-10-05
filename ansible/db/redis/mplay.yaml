@@ -1,0 +1,19 @@
+---
+- hosts: cluster-nodes
+  become: yes
+  remote_user: "adminuser"
+  roles:
+    - common
+# - hosts: cluster-nodes
+#   become: yes
+#   remote_user: "adminuser"
+#   tasks:
+#     - name: replication configure
+#       lineinfile:
+#         path: /etc/redis/redis.conf
+#         line: "replicaof {{ master_ip }} {{ master_port}}"
+
+#     - name: restart service
+#       systemd:
+#         name: redis-server
+#         state: restarted

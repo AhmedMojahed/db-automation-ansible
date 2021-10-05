@@ -1,0 +1,5 @@
+bind_address: "{{ hostvars[inventory_hostname]['vm_private_ip'] }}"
+master_ip: "{{ groups['seed-nodes'] | map('extract', hostvars, ['vm_private_ip']) | join(' ') }}"
+master_port: 6379
+master_auth: "1g4xF5ypuqNjHa3VdRt5zIXk94cYuCJFB/DAyfij6sp617q5xOxEIRPCEQRDtseJ/3RPlyEwR2stYhOk"
+require_pass: "POOoNRFiCqj++PHhmeRKVNaIOnxF/ql0nRYlvKJwQFaivKX62bJxHl2bRxwAGvjOTFgjuXsg6bMY3fB0"

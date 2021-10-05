@@ -211,6 +211,58 @@ resource "azurerm_linux_virtual_machine" "halandbs2vm" {
 }
 
 ##########################################################
+resource "azurerm_public_ip" "halandbs3vmpubip" {
+  name                = "${var.dbs3_vm_name}-pubip"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.halangroup.name
+  allocation_method   = "Dynamic"
+}
+
+# dbs1 VM Nic
+resource "azurerm_network_interface" "halandbs3vmnic" {
+  name                = "${var.dbs3_vm_name}-nic"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.halangroup.name
+
+  ip_configuration {
+    name                          = "${var.dbs3_vm_name}-nic-configuration"
+    subnet_id                     = azurerm_subnet.halansubnet.id
+    private_ip_address_allocation = "Static"
+    private_ip_address            = var.dbs3_vm_private_ip
+    public_ip_address_id          = azurerm_public_ip.halandbs3vmpubip.id
+  }
+
+}
+# dbs1 VM Linux
+resource "azurerm_linux_virtual_machine" "halandbs3vm" {
+  name                            = var.dbs3_vm_name
+  location                        = var.location
+  resource_group_name             = azurerm_resource_group.halangroup.name
+  network_interface_ids           = [azurerm_network_interface.halandbs3vmnic.id]
+  size                            = var.vm_size
+  admin_username                  = "adminuser"
+  disable_password_authentication = true
+
+  admin_ssh_key {
+    username   = "adminuser"
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+
+  os_disk {
+    name                 = "${var.dbs3_vm_name}-os-disk"
+    caching              = "ReadWrite"
+    storage_account_type = "StandardSSD_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+}
+##########################################################
+
 
 # ### Module outputs ###
 # output "DB_NAME" {
@@ -239,6 +291,9 @@ output "SLAVEDB1_PRIVATE_IP" {
 output "SLAVEDB2_PRIVATE_IP" {
   value = var.dbs2_vm_private_ip
 }
+output "SLAVEDB3_PRIVATE_IP" {
+  value = var.dbs3_vm_private_ip
+}
 
 
 output "MASTERDB_PUBLIC_IP" {
@@ -249,4 +304,7 @@ output "SLAVEDB1_PUBLIC_IP" {
 }
 output "SLAVEDB2_PUBLIC_IP" {
   value = azurerm_linux_virtual_machine.halandbs2vm.public_ip_address
+}
+output "SLAVEDB3_PUBLIC_IP" {
+  value = azurerm_linux_virtual_machine.halandbs3vm.public_ip_address
 }
